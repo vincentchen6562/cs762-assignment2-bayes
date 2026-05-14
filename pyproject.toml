@@ -1,0 +1,10 @@
+[project]
+name = "assingment2"
+version = "0.1.0"
+description = "COMPSCI762 Assignment 2"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "kagglehub>=1.0.1",
+    "scikit-learn>=1.8.0",
+]
