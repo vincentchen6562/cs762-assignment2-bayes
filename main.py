@@ -7,41 +7,42 @@ from sklearn.feature_extraction.text import CountVectorizer
 all_training = "./dataset/train.csv"
 all_test = "./dataset/test.csv"
 
-
 # Data preprocessing
 def extract(filename):
     """
-    Extracts reviews as a vectorized np array and categories
-    depending on the data 
+    Extracts reviews as a vectorized np array, categories
+    depending on the data and headers
     """
     reviews = []
     all_categories = []
 
     with open(filename, "r") as csvfile:
-        csvreader = csv.reader(csvfile)
-        next(csvreader) # Skip the headers
-        for row in csvreader:
-            reviews.append(row[5])
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            reviews.append(row['review'])
             training = len(row) == 7 
             if training: 
-                all_categories.append(row[-1])
+                all_categories.append(row['category'])
 
     vectorizer = CountVectorizer()
-    reviews_array = vectorizer.fit_transform(reviews).toarray()
+    rv_vectors = vectorizer.fit_transform(reviews)
+    headers = vectorizer.get_feature_names_out() 
+    reviews_array = rv_vectors.toarray()
     return {
         'categories': all_categories,
-        'reviews': reviews_array
+        'reviews': reviews_array,
+        'headers': headers
     }
 
 
 # Calculate probabilities
-def get_review_conds(categories, rv_array):
+def get_review_conds(categories, rv_array, headers):
     """
     Returns a dictionary containing a list of conditional probabilities 
     (as logs) for each word for each given the categories and the probability 
     for each category as logs
     """
-    # Calculate prior for each category     
+    # Calculate PRIOR for each category     
     p_restaurants = math.log(categories.count('Restaurants')/len(categories))
     p_nightlife = math.log(categories.count('Nightlife')/len(categories))
     p_shopping = math.log(categories.count('Shopping')/len(categories))
@@ -69,20 +70,34 @@ def get_review_conds(categories, rv_array):
         rest_probs.append(math.log(rest_total[i] / len(rest_total)))
         night_probs.append(math.log(night_total[i] / len(night_total)))
         shop_probs.append(math.log(shop_total[i]/ len(shop_total)))
+
+    # Build header and probability dictionary
+    rest_probs_dict = {headers[i]:rest_probs[i] for i in range(len(headers))}
+    shop_probs_dict = {headers[i]:rest_probs[i] for i in range(len(headers))}
+    night_probs_dict = {headers[i]:rest_probs[i] for i in range(len(headers))}
+
+    print(rest_probs_dict)
     
     return {
-        'restaurant': (p_restaurants, rest_probs),
-        'nightlife': (p_restaurants, night_probs),
-        'shopping': (p_shopping, shop_probs)
+        'restaurant': (p_restaurants, rest_probs_dict),
+        'nightlife': (p_restaurants, night_probs_dict),
+        'shopping': (p_shopping, shop_probs_dict)
     }
 
 
 # Calculate the POSTERIOR probability
 def calc_post(train_file, test_file):
-    cats = extract(train_file)['categories']
-    reviews = extract(train_file)['reviews']
-    probs = get_review_conds(cats, reviews)
+    priors = extract(train_file)['categories']
+    tr_reviews = extract(train_file)['reviews']
+    tr_headers = extract(train_file)['headers']
+    test_reviews = extract(test_file)['reviews']
+    probs = get_review_conds(priors, tr_reviews, tr_headers)
 
+    # for row in test_reviews:
+    #     for j in range(len(row)):
+    #         if j == row.index('review'):
+    #             print(True)
 
-    
-    
+     
+
+calc_post(all_training, all_test)
