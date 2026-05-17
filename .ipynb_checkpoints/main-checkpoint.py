@@ -128,7 +128,7 @@ def write_predictions(output_file, predictions_dict):
     df.to_csv(output_file, index=False)
 
 
-if __name__ == '__main__':
-    cat_predict = calc_post(all_training, all_test)
-    write_predictions(predict_output, cat_predict)
+# if __name__ == '__main__':
+#     cat_predict = calc_post(all_training, all_test)
+#     write_predictions(predict_output, cat_predict)
 
